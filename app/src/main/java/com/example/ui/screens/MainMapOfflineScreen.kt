@@ -1,7 +1,10 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,12 +14,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +36,8 @@ fun MainMapOfflineScreen(
     onNavigateToChat: () -> Unit,
     onNavigateToFaceScan: () -> Unit
 ) {
+    val context = LocalContext.current
+
     // Scaffold UI
     Scaffold(
         topBar = {
@@ -46,8 +53,26 @@ fun MainMapOfflineScreen(
                     IconButton(onClick = onNavigateToFaceScan) {
                         Icon(Icons.Filled.CameraAlt, contentDescription = "Escáner Biométrico", tint = FlagBlue)
                     }
+                    IconButton(onClick = {
+                        // WhatsApp Intent to share emergency status
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, "¡ALERTA SISMO! Estoy en LAT 10.48 | LON -66.90. Necesito soporte. Enviado vía SismoRedVen P2P.")
+                            type = "text/plain"
+                            setPackage("com.whatsapp")
+                        }
+                        try {
+                            context.startActivity(sendIntent)
+                        } catch (e: Exception) {
+                            // Fallback if WhatsApp is not installed
+                            val fallbackIntent = Intent.createChooser(sendIntent, "Compartir ubicación de emergencia")
+                            context.startActivity(fallbackIntent)
+                        }
+                    }) {
+                        Icon(Icons.Filled.Share, contentDescription = "Compartir WhatsApp", tint = FlagRed)
+                    }
                     IconButton(onClick = onNavigateToChat) {
-                        Icon(Icons.Filled.Chat, contentDescription = "Chat Global", tint = FlagRed)
+                        Icon(Icons.Filled.Chat, contentDescription = "Chat Global", tint = TextPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

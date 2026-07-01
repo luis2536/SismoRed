@@ -3,7 +3,13 @@ package com.example.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +25,10 @@ import com.example.ui.theme.*
 fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
+    var isRegistering by remember { mutableStateOf(false) }
+    var nombre by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
+    var cedula by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("Rescatista") }
 
@@ -36,18 +45,60 @@ fun LoginScreen(
                 .clip(RoundedCornerShape(16.dp))
                 .background(GlassBackground)
                 .border(2.dp, GlassBorder, RoundedCornerShape(16.dp))
-                .padding(32.dp),
+                .padding(32.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("SISMORED VEN", color = FlagYellow, fontWeight = FontWeight.Black, fontSize = 28.sp, letterSpacing = 2.sp)
             Text("NÚCLEO CENTRAL", color = FlagBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (isRegistering) {
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(GlassBorder),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.CameraAlt, contentDescription = "Foto de Perfil", tint = TextPrimary, modifier = Modifier.size(48.dp))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre Completo", color = TextPrimary.copy(alpha=0.7f)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = FlagYellow,
+                        unfocusedBorderColor = GlassBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                OutlinedTextField(
+                    value = telefono,
+                    onValueChange = { telefono = it },
+                    label = { Text("Teléfono (WhatsApp)", color = TextPrimary.copy(alpha=0.7f)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = FlagYellow,
+                        unfocusedBorderColor = GlassBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text("ID Cédula / Alias", color = TextPrimary.copy(alpha=0.7f)) },
+                value = cedula,
+                onValueChange = { cedula = it },
+                label = { Text("ID Cédula", color = TextPrimary.copy(alpha=0.7f)) },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = FlagYellow,
                     unfocusedBorderColor = GlassBorder,
@@ -57,7 +108,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = password,
@@ -75,23 +126,36 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                RadioButton(
-                    selected = role == "Rescatista",
-                    onClick = { role = "Rescatista" },
-                    colors = RadioButtonDefaults.colors(selectedColor = FlagBlue, unselectedColor = GlassBorder)
-                )
-                Text("Rescatista", color = TextPrimary)
-                Spacer(modifier = Modifier.width(16.dp))
-                RadioButton(
-                    selected = role == "Civil",
-                    onClick = { role = "Civil" },
-                    colors = RadioButtonDefaults.colors(selectedColor = FlagYellow, unselectedColor = GlassBorder)
-                )
-                Text("Civil", color = TextPrimary)
-            }
+            if (isRegistering) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    RadioButton(
+                        selected = role == "Rescatista",
+                        onClick = { role = "Rescatista" },
+                        colors = RadioButtonDefaults.colors(selectedColor = FlagBlue, unselectedColor = GlassBorder)
+                    )
+                    Text("Rescatista", color = TextPrimary, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    RadioButton(
+                        selected = role == "Civil",
+                        onClick = { role = "Civil" },
+                        colors = RadioButtonDefaults.colors(selectedColor = FlagYellow, unselectedColor = GlassBorder)
+                    )
+                    Text("Civil", color = TextPrimary, fontSize = 12.sp)
+                }
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { /* Lógica biométrica */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = GlassBorder, contentColor = TextPrimary),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Fingerprint, contentDescription = "Biometría")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Vincular Datos Biométricos")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Button(
                 onClick = onLoginSuccess,
@@ -99,7 +163,13 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("INICIAR SESIÓN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text(if (isRegistering) "REGISTRAR Y ACCEDER" else "INICIAR SESIÓN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(onClick = { isRegistering = !isRegistering }) {
+                Text(if (isRegistering) "¿Ya tienes cuenta? Inicia Sesión" else "¿No tienes cuenta? Regístrate", color = FlagBlue)
             }
         }
     }
