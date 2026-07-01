@@ -1,6 +1,6 @@
 {
-  "name": "Syntropy ResQ-Net V1",
-  "description": "Ecosistema móvil para gestión de desastres y rastreo offline-first (Glassmorphism cyberpunk).",
+  "name": "SismoRedVen",
+  "description": "Ecosistema móvil para gestión de desastres y rastreo offline-first. Reconocimiento biométrico avanzado con IA.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

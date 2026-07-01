@@ -29,17 +29,17 @@ fun ChatScreen(
     
     // Fake messages for simulation
     val messages = remember { mutableStateListOf(
-        ChatMessageEntity(1, "system", "Syntropy Node", "Conexión encriptada estable. Malla VPN activa.", System.currentTimeMillis() - 60000, true),
-        ChatMessageEntity(2, "user_1", "Rescatista Alpha", "¿Alguien en el sector 4? Necesitamos soporte médico.", System.currentTimeMillis() - 30000, true)
+        ChatMessageEntity(1, "system", "Núcleo Central", "Conexión encriptada estable. Malla VPN activa.", System.currentTimeMillis() - 60000, true),
+        ChatMessageEntity(2, "user_1", "Rescatista Alpha", "¿Alguien en el sector 4? Necesitamos soporte.", System.currentTimeMillis() - 30000, true)
     ) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Global P2P Chat", color = NeonCyan, fontWeight = FontWeight.Bold) },
+                title = { Text("Chat Global P2P", color = FlagYellow, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = NeonCyan)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = FlagYellow)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MatrixDark)
@@ -77,7 +77,7 @@ fun ChatScreen(
                     placeholder = { Text("Transmitir en malla...", color = TextPrimary.copy(alpha=0.5f)) },
                     modifier = Modifier.weight(1f),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeonCyan,
+                        focusedBorderColor = FlagYellow,
                         unfocusedBorderColor = GlassBorder,
                         focusedTextColor = TextPrimary
                     )
@@ -93,14 +93,14 @@ fun ChatScreen(
                                     senderName = "Yo",
                                     message = messageText,
                                     timestamp = System.currentTimeMillis(),
-                                    isSynced = false // Will be synced by background worker
+                                    isSynced = false
                                 )
                             )
                             messageText = ""
                         }
                     },
                     modifier = Modifier
-                        .background(NeonCyan, RoundedCornerShape(8.dp))
+                        .background(FlagYellow, RoundedCornerShape(8.dp))
                 ) {
                     Icon(Icons.Filled.Send, contentDescription = "Enviar", tint = MatrixDark)
                 }
@@ -127,8 +127,8 @@ fun ChatBubble(msg: ChatMessageEntity) {
                     bottomStart = if (isMe) 16.dp else 0.dp,
                     bottomEnd = if (isMe) 0.dp else 16.dp
                 ))
-                .background(if (isSystem) GlassBorder else if (isMe) NeonCyan.copy(alpha = 0.2f) else GlassBackground)
-                .border(1.dp, if (isSystem) NeonCyan else if (isMe) NeonCyan else GlassBorder, RoundedCornerShape(
+                .background(if (isSystem) GlassBorder else if (isMe) FlagYellow.copy(alpha = 0.2f) else GlassBackground)
+                .border(1.dp, if (isSystem) FlagYellow else if (isMe) FlagYellow else GlassBorder, RoundedCornerShape(
                     topStart = 16.dp,
                     topEnd = 16.dp,
                     bottomStart = if (isMe) 16.dp else 0.dp,
@@ -138,7 +138,7 @@ fun ChatBubble(msg: ChatMessageEntity) {
         ) {
             Column {
                 if (!isMe) {
-                    Text(msg.senderName, color = if (isSystem) NeonCyan else NeonGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(msg.senderName, color = if (isSystem) FlagYellow else FlagBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 Text(msg.message, color = TextPrimary, fontSize = 14.sp)

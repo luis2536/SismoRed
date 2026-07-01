@@ -2,10 +2,11 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val NeonCyan = Color(0xFF00FFCC)
-val NeonGreen = Color(0xFF39FF14)
-val MatrixDark = Color(0xFF0A0F0D)
-val GlassBackground = Color(0x331A2B25) // Semi-transparent for glassmorphism
-val GlassBorder = Color(0x6600FFCC)
-val TextPrimary = Color(0xFFE0F2F1)
+val FlagYellow = Color(0xFFFFD100)
+val FlagBlue = Color(0xFF0038A8)
+val FlagRed = Color(0xFFCE1126)
+val MatrixDark = Color(0xFF121212)
+val GlassBackground = Color(0x33222222)
+val GlassBorder = Color(0x66FFD100)
+val TextPrimary = Color(0xFFF5F5F5)
 val ErrorRed = Color(0xFFFF2A2A)

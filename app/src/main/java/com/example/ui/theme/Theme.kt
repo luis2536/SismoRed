@@ -10,15 +10,15 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val CyberpunkColorScheme = darkColorScheme(
-    primary = NeonCyan,
-    secondary = NeonGreen,
-    tertiary = NeonCyan,
+private val TricolorColorScheme = darkColorScheme(
+    primary = FlagYellow,
+    secondary = FlagBlue,
+    tertiary = FlagRed,
     background = MatrixDark,
     surface = GlassBackground,
     onPrimary = MatrixDark,
-    onSecondary = MatrixDark,
-    onTertiary = MatrixDark,
+    onSecondary = TextPrimary,
+    onTertiary = TextPrimary,
     onBackground = TextPrimary,
     onSurface = TextPrimary,
     error = ErrorRed
@@ -31,7 +31,7 @@ fun MyApplicationTheme(
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colorScheme = CyberpunkColorScheme,
+        colorScheme = TricolorColorScheme,
         typography = Typography,
         content = content
     )

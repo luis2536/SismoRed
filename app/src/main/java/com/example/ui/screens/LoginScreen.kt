@@ -35,21 +35,21 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(GlassBackground)
-                .border(1.dp, GlassBorder, RoundedCornerShape(16.dp))
+                .border(2.dp, GlassBorder, RoundedCornerShape(16.dp))
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("SYNTROPY", color = NeonCyan, fontWeight = FontWeight.Black, fontSize = 28.sp, letterSpacing = 4.sp)
-            Text("RESQ-NET KERNEL", color = NeonGreen, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("SISMORED VEN", color = FlagYellow, fontWeight = FontWeight.Black, fontSize = 28.sp, letterSpacing = 2.sp)
+            Text("NÚCLEO CENTRAL", color = FlagBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             
             Spacer(modifier = Modifier.height(32.dp))
 
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("ID Cívico / Alias", color = TextPrimary.copy(alpha=0.7f)) },
+                label = { Text("ID Cédula / Alias", color = TextPrimary.copy(alpha=0.7f)) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = NeonCyan,
+                    focusedBorderColor = FlagYellow,
                     unfocusedBorderColor = GlassBorder,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -65,7 +65,7 @@ fun LoginScreen(
                 label = { Text("Clave de Acceso", color = TextPrimary.copy(alpha=0.7f)) },
                 visualTransformation = PasswordVisualTransformation(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = NeonCyan,
+                    focusedBorderColor = FlagYellow,
                     unfocusedBorderColor = GlassBorder,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -79,14 +79,14 @@ fun LoginScreen(
                 RadioButton(
                     selected = role == "Rescatista",
                     onClick = { role = "Rescatista" },
-                    colors = RadioButtonDefaults.colors(selectedColor = NeonGreen, unselectedColor = GlassBorder)
+                    colors = RadioButtonDefaults.colors(selectedColor = FlagBlue, unselectedColor = GlassBorder)
                 )
                 Text("Rescatista", color = TextPrimary)
                 Spacer(modifier = Modifier.width(16.dp))
                 RadioButton(
                     selected = role == "Civil",
                     onClick = { role = "Civil" },
-                    colors = RadioButtonDefaults.colors(selectedColor = NeonCyan, unselectedColor = GlassBorder)
+                    colors = RadioButtonDefaults.colors(selectedColor = FlagYellow, unselectedColor = GlassBorder)
                 )
                 Text("Civil", color = TextPrimary)
             }
@@ -95,11 +95,11 @@ fun LoginScreen(
 
             Button(
                 onClick = onLoginSuccess,
-                colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = MatrixDark),
+                colors = ButtonDefaults.buttonColors(containerColor = FlagYellow, contentColor = MatrixDark),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("INICIALIZAR SESIÓN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("INICIAR SESIÓN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
         }
     }

@@ -32,7 +32,9 @@ jobs:
         echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
 
     - name: Clean Gradle Cache
-      run: ./gradlew clean
+      run: |
+        chmod +x gradlew
+        ./gradlew clean
 
     - name: Build Release APK
       run: ./gradlew assembleRelease --no-daemon

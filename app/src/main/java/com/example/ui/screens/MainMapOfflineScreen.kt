@@ -36,30 +36,30 @@ fun MainMapOfflineScreen(
         topBar = {
             TopAppBar(
                 title = { 
-                    Text("Syntropy ResQ-Net V1", 
-                         color = NeonCyan, 
+                    Text("SismoRedVen", 
+                         color = FlagYellow, 
                          fontWeight = FontWeight.Bold,
                          letterSpacing = 2.sp,
                          fontSize = 18.sp) 
                 },
                 actions = {
                     IconButton(onClick = onNavigateToFaceScan) {
-                        Icon(Icons.Filled.CameraAlt, contentDescription = "Face Telemetry Scan", tint = NeonGreen)
+                        Icon(Icons.Filled.CameraAlt, contentDescription = "Escáner Biométrico", tint = FlagBlue)
                     }
                     IconButton(onClick = onNavigateToChat) {
-                        Icon(Icons.Filled.Chat, contentDescription = "Global Chat", tint = NeonCyan)
+                        Icon(Icons.Filled.Chat, contentDescription = "Chat Global", tint = FlagRed)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MatrixDark,
-                    titleContentColor = NeonCyan
+                    titleContentColor = FlagYellow
                 )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { /* Add report */ },
-                containerColor = NeonGreen,
+                containerColor = FlagBlue,
                 contentColor = MatrixDark
             ) {
                 Icon(Icons.Filled.Add, "Reportar Incidente")
@@ -84,9 +84,9 @@ fun MainMapOfflineScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.Warning, contentDescription = "Map Offline", tint = NeonCyan, modifier = Modifier.size(48.dp))
+                    Icon(Icons.Filled.Warning, contentDescription = "Map Offline", tint = FlagYellow, modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("MAPA OFFLINE (CACHÉ)", color = NeonCyan, fontWeight = FontWeight.Bold)
+                    Text("MAPA OFFLINE (CACHÉ)", color = FlagYellow, fontWeight = FontWeight.Bold)
                     Text("Cargando polígonos locales...", color = TextPrimary, fontSize = 12.sp)
                 }
             }
@@ -95,19 +95,19 @@ fun MainMapOfflineScreen(
 
             // Telemetry Dashboard
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                TelemetryCard(title = "ESTADO RED", value = "MALLA P2P ACTIVA", color = NeonGreen, modifier = Modifier.weight(1f))
+                TelemetryCard(title = "ESTADO RED", value = "MALLA P2P ACTIVA", color = FlagBlue, modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.width(8.dp))
-                TelemetryCard(title = "COORDENADAS", value = "LAT 19.4 | LON -99.1", color = NeonCyan, modifier = Modifier.weight(1f))
+                TelemetryCard(title = "COORDENADAS", value = "LAT 10.48 | LON -66.90", color = FlagRed, modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("REPORTES LOCALES", color = NeonGreen, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("REPORTES LOCALES", color = FlagBlue, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Spacer(modifier = Modifier.height(8.dp))
 
             // Fake List for Demonstration
             val dummyList = listOf(
-                ResqReportEntity(1, "Sismo", "Magnitud 6.8 reportada en la zona central.", 19.4326, -99.1332, isSynced = false),
-                ResqReportEntity(2, "Persona", "Solicitud de búsqueda", 19.43, -99.13, isSynced = true)
+                ResqReportEntity(1, "Sismo", "Magnitud 6.8 reportada en la zona central.", 10.48, -66.90, isSynced = false),
+                ResqReportEntity(2, "Persona", "Solicitud de búsqueda por IA biométrica", 10.50, -66.92, isSynced = true)
             )
 
             LazyColumn {
@@ -149,8 +149,8 @@ fun ReportCard(report: ResqReportEntity) {
     ) {
         Column {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(report.type.uppercase(), color = NeonCyan, fontWeight = FontWeight.Bold)
-                Text(if (report.isSynced) "SYNCED" else "OFFLINE", color = if (report.isSynced) NeonGreen else ErrorRed, fontSize = 10.sp)
+                Text(report.type.uppercase(), color = FlagYellow, fontWeight = FontWeight.Bold)
+                Text(if (report.isSynced) "SINC" else "OFFLINE", color = if (report.isSynced) FlagBlue else ErrorRed, fontSize = 10.sp)
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(report.description, color = TextPrimary, fontSize = 14.sp)

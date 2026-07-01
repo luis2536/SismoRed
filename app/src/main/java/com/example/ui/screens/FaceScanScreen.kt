@@ -27,11 +27,16 @@ fun FaceScanScreen(
 ) {
     var scanning by remember { mutableStateOf(false) }
     var scanResult by remember { mutableStateOf<String?>(null) }
+    var mode by remember { mutableStateOf("VIVO") } // "VIVO" or "FORENSE"
 
     LaunchedEffect(scanning) {
         if (scanning) {
-            delay(2000) // Simulate Edge AI Face Processing
-            scanResult = "MATCH FOUND: Civil Registrado [ID: 9X-214]"
+            delay(2500) // Simulate Edge AI Face Processing
+            scanResult = if (mode == "FORENSE") {
+                "COINCIDENCIA (92%): Civil [ID: 7X-912]. Reconstrucción IA Exitosa (Daño Post-Mortem detectado)."
+            } else {
+                "COINCIDENCIA (99%): Civil [ID: 9X-214]. Estado Vital: Estable."
+            }
             scanning = false
         }
     }
@@ -39,10 +44,10 @@ fun FaceScanScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Telemetría Facial Edge AI", color = NeonCyan, fontWeight = FontWeight.Bold) },
+                title = { Text("Escáner Biométrico IA", color = FlagYellow, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = NeonCyan)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = FlagYellow)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MatrixDark)
@@ -58,20 +63,38 @@ fun FaceScanScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                RadioButton(
+                    selected = mode == "VIVO",
+                    onClick = { mode = "VIVO" },
+                    colors = RadioButtonDefaults.colors(selectedColor = FlagBlue, unselectedColor = GlassBorder)
+                )
+                Text("Búsqueda Vivo", color = TextPrimary, modifier = Modifier.align(Alignment.CenterVertically))
+                Spacer(modifier = Modifier.width(16.dp))
+                RadioButton(
+                    selected = mode == "FORENSE",
+                    onClick = { mode = "FORENSE" },
+                    colors = RadioButtonDefaults.colors(selectedColor = FlagRed, unselectedColor = GlassBorder)
+                )
+                Text("Análisis Forense IA", color = ErrorRed, modifier = Modifier.align(Alignment.CenterVertically))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Simulated Camera Preview Viewport
             Box(
                 modifier = Modifier
                     .size(300.dp)
                     .clip(CircleShape)
                     .background(GlassBackground)
-                    .border(2.dp, if (scanning) NeonCyan else GlassBorder, CircleShape),
+                    .border(2.dp, if (scanning) FlagYellow else GlassBorder, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 if (scanning) {
-                    CircularProgressIndicator(color = NeonCyan, modifier = Modifier.size(250.dp), strokeWidth = 2.dp)
-                    Text("PROCESANDO TENSORFLOW.JS...", color = NeonCyan, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    CircularProgressIndicator(color = FlagYellow, modifier = Modifier.size(250.dp), strokeWidth = 2.dp)
+                    Text("PROCESANDO TENSORFLOW IA...", color = FlagYellow, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 } else if (scanResult != null) {
-                    Icon(Icons.Filled.CheckCircle, contentDescription = "Match", tint = NeonGreen, modifier = Modifier.size(100.dp))
+                    Icon(Icons.Filled.CheckCircle, contentDescription = "Match", tint = if (mode == "FORENSE") FlagRed else FlagBlue, modifier = Modifier.size(100.dp))
                 } else {
                     Icon(Icons.Filled.CameraAlt, contentDescription = "Camera", tint = TextPrimary.copy(alpha=0.3f), modifier = Modifier.size(100.dp))
                 }
@@ -80,11 +103,11 @@ fun FaceScanScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             if (scanResult != null) {
-                Text(scanResult!!, color = NeonGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(scanResult!!, color = if (mode == "FORENSE") FlagRed else FlagBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { scanResult = null },
-                    colors = ButtonDefaults.buttonColors(containerColor = GlassBackground, contentColor = NeonCyan),
+                    colors = ButtonDefaults.buttonColors(containerColor = GlassBackground, contentColor = FlagYellow),
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -93,7 +116,7 @@ fun FaceScanScreen(
             } else {
                 Button(
                     onClick = { scanning = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = MatrixDark),
+                    colors = ButtonDefaults.buttonColors(containerColor = FlagYellow, contentColor = MatrixDark),
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
