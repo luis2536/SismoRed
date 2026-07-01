@@ -86,14 +86,18 @@ fun FaceScanScreen(
             Box(
                 modifier = Modifier
                     .size(300.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(32.dp))
                     .background(GlassBackground)
-                    .border(2.dp, if (scanning) FlagYellow else GlassBorder, CircleShape),
+                    .border(2.dp, if (scanning) FlagYellow else GlassBorder, RoundedCornerShape(32.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (scanning) {
                     CircularProgressIndicator(color = FlagYellow, modifier = Modifier.size(250.dp), strokeWidth = 2.dp)
-                    Text("PROCESANDO TENSORFLOW IA...", color = FlagYellow, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("PROCESANDO TENSORFLOW IA...", color = FlagYellow, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Generando puntos faciales (128d)...", color = TextPrimary.copy(alpha=0.6f), fontSize = 8.sp)
+                    }
                 } else if (scanResult != null) {
                     Icon(Icons.Filled.CheckCircle, contentDescription = "Match", tint = if (mode == "FORENSE") FlagRed else FlagBlue, modifier = Modifier.size(100.dp))
                 } else {
@@ -104,12 +108,30 @@ fun FaceScanScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             if (scanResult != null) {
-                Text(scanResult!!, color = if (mode == "FORENSE") FlagRed else FlagBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                if (mode == "FORENSE") {
-                    Text("NOTA: Reconstrucción craneofacial asistida por Gemini AI aplicada con éxito. Precisión 92%.", color = TextPrimary, fontSize = 12.sp, textAlign = TextAlign.Center)
-                    Spacer(modifier = Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(GlassBackground)
+                        .border(1.dp, if (mode == "FORENSE") FlagRed.copy(alpha = 0.5f) else FlagBlue.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Text(scanResult!!, color = if (mode == "FORENSE") FlagRed else FlagBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text("Datos Extraídos:", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("- Sexo: Femenino (Estimado 98%)", color = TextPrimary.copy(alpha=0.8f), fontSize = 11.sp)
+                        Text("- Edad: 24-28 años", color = TextPrimary.copy(alpha=0.8f), fontSize = 11.sp)
+                        Text("- Estado: ${if(mode == "FORENSE") "Signos post-mortem. Algoritmo degenerativo aplicado." else "Constantes vitales detectadas."}", color = TextPrimary.copy(alpha=0.8f), fontSize = 11.sp)
+                        
+                        if (mode == "FORENSE") {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("NOTA: Reconstrucción craneofacial asistida por Gemini AI aplicada con éxito. Precisión 92%.", color = FlagYellow, fontSize = 10.sp)
+                        }
+                    }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { scanResult = null },
                     colors = ButtonDefaults.buttonColors(containerColor = GlassBackground, contentColor = FlagYellow),

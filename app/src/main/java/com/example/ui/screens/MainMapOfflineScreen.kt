@@ -145,14 +145,22 @@ fun MainMapOfflineScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Telemetry Dashboard
+            Text("TELEMETRÍA P2P & SENSORES", color = FlagYellow, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TelemetryCard(title = "ESTADO RED", value = "MALLA P2P ACTIVA", color = FlagBlue, modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.width(8.dp))
                 TelemetryCard(title = "COORDENADAS", value = "LAT 10.48 | LON -66.90", color = FlagRed, modifier = Modifier.weight(1f))
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                TelemetryCard(title = "ACTIVIDAD SÍSMICA", value = "ANOMALÍA LEVE", color = FlagYellow, modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(8.dp))
+                TelemetryCard(title = "NODOS ACTIVOS", value = "24 CONECTADOS", color = FlagBlue, modifier = Modifier.weight(1f))
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("REPORTES LOCALES", color = FlagBlue, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("ALERTAS Y REPORTES LOCALES", color = FlagRed, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(8.dp))
 
             // Fake List for Demonstration

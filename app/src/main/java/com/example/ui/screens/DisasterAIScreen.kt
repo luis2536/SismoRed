@@ -108,6 +108,24 @@ fun DisasterAIScreen(onNavigateBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val suggestedPrompts = listOf("Protocolo de evacuación", "Primeros auxilios", "Reportar derrumbe")
+            
+            if (chatHistory.size <= 2) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    suggestedPrompts.forEach { promptText ->
+                        AssistChip(
+                            onClick = { prompt = promptText },
+                            label = { Text(promptText, fontSize = 10.sp, color = TextPrimary) },
+                            colors = AssistChipDefaults.assistChipColors(containerColor = GlassBackground),
+                            border = AssistChipDefaults.assistChipBorder(borderColor = FlagYellow, enabled = true)
+                        )
+                    }
+                }
+            }
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = prompt,
