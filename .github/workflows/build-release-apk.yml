@@ -29,7 +29,6 @@ jobs:
       run: |
         mkdir -p ~/.gradle
         echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" >> ~/.gradle/gradle.properties
-        echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
 
     - name: Generate Gradle Wrapper
       run: gradle wrapper
@@ -38,7 +37,7 @@ jobs:
       run: ./gradlew clean
 
     - name: Build Debug APK
-      run: ./gradlew assembleDebug --no-daemon
+      run: ./gradlew assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
