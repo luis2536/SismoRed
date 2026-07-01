@@ -58,11 +58,32 @@ fun MainMapOfflineScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Add report */ },
-                containerColor = FlagBlue,
-                contentColor = MatrixDark
+                onClick = { /* Panic SOS */ },
+                containerColor = ErrorRed,
+                contentColor = TextPrimary
             ) {
-                Icon(Icons.Filled.Add, "Reportar Incidente")
+                Icon(Icons.Filled.Warning, "Botón SOS de Pánico")
+            }
+        },
+        bottomBar = {
+            BottomAppBar(
+                containerColor = GlassBackground,
+                contentColor = FlagYellow
+            ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    IconButton(onClick = { /* Mapa */ }) {
+                        Icon(Icons.Filled.Warning, contentDescription = "Mapa", tint = FlagYellow)
+                    }
+                    IconButton(onClick = { /* Registro */ }) {
+                        Icon(Icons.Filled.Add, contentDescription = "Registro Voluntarios", tint = FlagBlue)
+                    }
+                    IconButton(onClick = onNavigateToFaceScan) {
+                        Icon(Icons.Filled.CameraAlt, contentDescription = "Escáner Biométrico", tint = FlagRed)
+                    }
+                    IconButton(onClick = onNavigateToChat) {
+                        Icon(Icons.Filled.Chat, contentDescription = "Chat Global", tint = TextPrimary)
+                    }
+                }
             }
         },
         containerColor = MatrixDark
