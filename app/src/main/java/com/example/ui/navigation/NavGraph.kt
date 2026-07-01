@@ -9,6 +9,7 @@ import com.example.ui.screens.MainMapOfflineScreen
 import com.example.ui.screens.ChatScreen
 import com.example.ui.screens.FaceScanScreen
 import com.example.ui.screens.LoginScreen
+import com.example.ui.screens.DisasterAIScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
@@ -21,7 +22,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
         composable("home") {
             MainMapOfflineScreen(
                 onNavigateToChat = { navController.navigate("chat") },
-                onNavigateToFaceScan = { navController.navigate("face_scan") }
+                onNavigateToFaceScan = { navController.navigate("face_scan") },
+                onNavigateToAI = { navController.navigate("ai_assistant") }
             )
         }
         composable("chat") {
@@ -31,6 +33,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
         }
         composable("face_scan") {
             FaceScanScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable("ai_assistant") {
+            DisasterAIScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

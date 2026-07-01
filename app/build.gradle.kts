@@ -104,6 +104,7 @@ dependencies {
   implementation(libs.maps.compose)
   implementation(libs.play.services.maps)
   implementation(libs.firebase.ai)
+  implementation(libs.generativeai)
   implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)

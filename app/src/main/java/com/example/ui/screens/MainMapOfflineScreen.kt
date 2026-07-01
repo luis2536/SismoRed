@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,7 +35,8 @@ import kotlinx.coroutines.flow.flowOf
 @Composable
 fun MainMapOfflineScreen(
     onNavigateToChat: () -> Unit,
-    onNavigateToFaceScan: () -> Unit
+    onNavigateToFaceScan: () -> Unit,
+    onNavigateToAI: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -107,6 +109,9 @@ fun MainMapOfflineScreen(
                     }
                     IconButton(onClick = onNavigateToChat) {
                         Icon(Icons.Filled.Chat, contentDescription = "Chat Global", tint = TextPrimary)
+                    }
+                    IconButton(onClick = onNavigateToAI) {
+                        Icon(Icons.Filled.Info, contentDescription = "Asistente IA", tint = FlagYellow)
                     }
                 }
             }
