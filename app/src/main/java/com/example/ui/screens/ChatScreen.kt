@@ -79,7 +79,8 @@ fun ChatScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = FlagYellow,
                         unfocusedBorderColor = GlassBorder,
-                        focusedTextColor = TextPrimary
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
                     )
                 )
                 Spacer(modifier = Modifier.width(8.dp))

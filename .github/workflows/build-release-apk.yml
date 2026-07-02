@@ -28,10 +28,10 @@ jobs:
     - name: Configure Gradle for performance and fix memory limit
       run: |
         mkdir -p ~/.gradle
-        echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" >> ~/.gradle/gradle.properties
+        echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Djava.awt.headless=true" >> ~/.gradle/gradle.properties
         echo "ksp.useKSP2=true" >> ~/.gradle/gradle.properties
         echo "kotlin.compiler.execution.strategy=in-process" >> ~/.gradle/gradle.properties
-        echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+        echo "org.gradle.daemon=true" >> ~/.gradle/gradle.properties
 
     - name: Generate Gradle Wrapper
       run: gradle wrapper

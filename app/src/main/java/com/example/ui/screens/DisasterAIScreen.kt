@@ -135,7 +135,8 @@ fun DisasterAIScreen(onNavigateBack: () -> Unit) {
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = FlagYellow,
                         unfocusedBorderColor = GlassBorder,
-                        focusedTextColor = TextPrimary
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
                     ),
                     shape = RoundedCornerShape(24.dp)
                 )
