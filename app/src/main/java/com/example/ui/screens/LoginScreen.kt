@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -15,10 +16,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.ui.theme.*
 
 @Composable
@@ -38,13 +43,23 @@ fun LoginScreen(
             .background(MatrixDark),
         contentAlignment = Alignment.Center
     ) {
+        // Subtle 3D background image
+        Image(
+            painter = painterResource(id = R.drawable.vzla_flag_3d_bg_1783071278886),
+            contentDescription = "Background",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            alpha = 0.6f
+        )
+        
         Column(
             modifier = Modifier
                 .padding(24.dp)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(GlassBackground)
-                .border(2.dp, GlassBorder, RoundedCornerShape(16.dp))
+                .shadow(16.dp, RoundedCornerShape(24.dp), ambientColor = FlagBlue, spotColor = FlagYellow)
+                .clip(RoundedCornerShape(24.dp))
+                .background(GlassBackground.copy(alpha = 0.85f))
+                .border(1.dp, GlassBorder.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
                 .padding(32.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally

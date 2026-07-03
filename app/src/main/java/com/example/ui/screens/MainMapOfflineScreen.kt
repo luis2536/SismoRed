@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -34,9 +35,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.Room
+import com.example.data.local.AppDatabase
 import com.example.data.local.entity.ResqReportEntity
 import com.example.ui.theme.*
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlin.math.*
 
 data class WifiDevice(
@@ -48,7 +57,64 @@ data class WifiDevice(
     val sector: String
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+data class SeismicStation(
+    val code: String,
+    val name: String,
+    val location: String,
+    val lat: Double,
+    val lon: Double,
+    val type: String
+)
+
+data class GeologicalFault(
+    val name: String,
+    val zone: String,
+    val historicalSismos: String,
+    val lengthKm: Int,
+    val riskLevel: String,
+    val slipRate: String
+)
+
+val funvisisStationsList = listOf(
+    SeismicStation("CAR", "Estación Cajigal", "Caracas, Dto. Capital", 10.51, -66.93, "Banda Ancha Tridimensional"),
+    SeismicStation("BIR", "Estación Birongo", "Brión, Edo. Miranda", 10.48, -66.24, "Sismómetro Satelital P2P"),
+    SeismicStation("BAU", "Estación El Baúl", "El Baúl, Edo. Cojedes", 8.96, -68.28, "Estación de Subsuelo Profundo"),
+    SeismicStation("CUR", "Estación Curarigua", "Torres, Edo. Lara", 10.15, -69.95, "Red Sismológica Central"),
+    SeismicStation("ALV", "Estación Altagracia", "Orituco, Edo. Guárico", 9.86, -66.30, "Sensor de Alta Frecuencia"),
+    SeismicStation("LIG", "Estación La Grita", "Jáuregui, Edo. Táchira", 8.13, -71.98, "Acelerógrafo Transandino"),
+    SeismicStation("PTE", "Estación Puerto Cruz", "Edo. Anzoátegui", 10.18, -64.63, "Monitoreo de Falla de El Pilar"),
+    SeismicStation("MIG", "Estación San Miguel", "Edo. Trujillo", 9.75, -70.05, "Red de Falla de Boconó"),
+    SeismicStation("SOC", "Estación Socopó", "Edo. Barinas", 8.24, -70.78, "Sensor de Subsidencia Activo")
+)
+
+val geologicalFaultsList = listOf(
+    GeologicalFault(
+        name = "Falla de Boconó",
+        zone = "Andes Venezolanos (Táchira - Lara - Yaracuy)",
+        historicalSismos = "Mérida (1812), El Tocuyo (1950)",
+        lengthKm = 500,
+        riskLevel = "CRÍTICO - DESPLAZAMIENTO ACTIVO",
+        slipRate = "5.2 mm/año"
+    ),
+    GeologicalFault(
+        name = "Falla de San Sebastián",
+        zone = "Borde Costero Central (La Guaira - Caracas - Miranda)",
+        historicalSismos = "Caracas (1812, 1967)",
+        lengthKm = 480,
+        riskLevel = "CRÍTICO - ALTO ACOPLE SÍSMICO",
+        slipRate = "4.5 mm/año"
+    ),
+    GeologicalFault(
+        name = "Falla de El Pilar",
+        zone = "Serranía del Interior y Oriente (Sucre - Golfo de Paria)",
+        historicalSismos = "Cariaco (1997), Cumaná (1929)",
+        lengthKm = 350,
+        riskLevel = "CRÍTICO - ALTA VELOCIDAD DE DESLIZAMIENTO",
+        slipRate = "8.0 mm/año"
+    )
+)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MainMapOfflineScreen(
     onNavigateToChat: () -> Unit,
@@ -56,6 +122,7 @@ fun MainMapOfflineScreen(
     onNavigateToAI: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var selectedTab by remember { mutableStateOf(0) }
     
     // Test parameters
@@ -63,6 +130,43 @@ fun MainMapOfflineScreen(
     var userLon by remember { mutableStateOf(-66.89) }
     var showScanAnimation by remember { mutableStateOf(false) }
     var scanningProgress by remember { mutableStateOf(0f) }
+
+    // Room Database integration
+    val db = remember { Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "resq-net-db").build() }
+    val reportDao = remember { db.resqReportDao() }
+
+    // Dynamic counters for Aquí Estoy Venezuela (Baseline values + dynamic additions)
+    var dynamicReportedCount by remember { mutableStateOf(66834) }
+    var dynamicSearchedCount by remember { mutableStateOf(63760) }
+    var dynamicLocatedCount by remember { mutableStateOf(3074) }
+
+    // List of reports from local SQLite (Room)
+    val dbReportsList = remember { mutableStateListOf<ResqReportEntity>() }
+
+    // Search query for "Aquí Estoy" search box
+    var searchQuery by remember { mutableStateOf("") }
+    
+    // Register Dialog state
+    var showRegisterDialog by remember { mutableStateOf(false) }
+    var registerName by remember { mutableStateOf("") }
+    var registerLocationText by remember { mutableStateOf("") }
+    var registerStatus by remember { mutableStateOf("Buscado") } // "Buscado", "Localizado", "Reportado"
+    var registerDescription by remember { mutableStateOf("") }
+
+    // GPS location states
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val locationPermissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+    var gpsAccuracy by remember { mutableStateOf("Excelente (GPS)") }
+    var satelliteCount by remember { mutableStateOf(12) }
+    var compassHeading by remember { mutableStateOf(45f) }
+    var manualLatInput by remember { mutableStateOf("10.49") }
+    var manualLonInput by remember { mutableStateOf("-66.89") }
+    var isManualInputEnabled by remember { mutableStateOf(false) }
 
     // Acoustic sound wave life detector state
     var micSensitivity by remember { mutableStateOf(65f) }
@@ -79,6 +183,55 @@ fun MainMapOfflineScreen(
     var isWifiScanning by remember { mutableStateOf(false) }
     var scanCompleted by remember { mutableStateOf(false) }
     val wifiDevices = remember { mutableStateListOf<WifiDevice>() }
+
+    // Fetch reports from Room Database in real-time
+    LaunchedEffect(Unit) {
+        reportDao.getAllReports().collectLatest { reports ->
+            dbReportsList.clear()
+            dbReportsList.addAll(reports)
+            
+            val customReported = reports.size
+            val customSearched = reports.count { it.type.lowercase().contains("buscado") }
+            val customLocated = reports.count { it.type.lowercase().contains("localizado") }
+            
+            dynamicReportedCount = 66834 + customReported
+            dynamicSearchedCount = 63760 + customSearched
+            dynamicLocatedCount = 3074 + customLocated
+        }
+    }
+
+    // Connect to native Play Services GPS location if permission is granted
+    LaunchedEffect(locationPermissionsState.allPermissionsGranted, isManualInputEnabled) {
+        if (locationPermissionsState.allPermissionsGranted && !isManualInputEnabled) {
+            try {
+                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    if (location != null) {
+                        userLat = location.latitude
+                        userLon = location.longitude
+                        manualLatInput = String.format("%.5f", location.latitude)
+                        manualLonInput = String.format("%.5f", location.longitude)
+                        gpsAccuracy = "+/- ${String.format("%.1f", location.accuracy)} metros"
+                        satelliteCount = if (location.accuracy < 10) 14 else 9
+                    }
+                }
+            } catch (e: SecurityException) {
+                // permission exception
+            }
+        }
+    }
+
+    // Rotate compass needle dynamically
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(120)
+            if (isRecordingMic) {
+                compassHeading = (compassHeading + 1f) % 360f
+            } else {
+                // drift natural drift heading
+                compassHeading = (compassHeading + (sin(System.currentTimeMillis() / 2200.0) * 0.4f).toFloat() + 360f) % 360f
+            }
+        }
+    }
 
     // Wave/Sensitivity Dynamic Tick
     LaunchedEffect(isRecordingMic, isPlayingSaved) {
@@ -225,60 +378,175 @@ fun MainMapOfflineScreen(
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Filled.Map, contentDescription = "Mapa P2P") },
-                    label = { Text("Mapa", fontSize = 11.sp) },
+                    icon = { Icon(Icons.Filled.Assessment, contentDescription = "Estadísticas") },
+                    label = { Text("Aquí Estoy", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = FlagYellow, unselectedIconColor = TextPrimary.copy(alpha=0.6f))
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Filled.Sensors, contentDescription = "Sismología") },
-                    label = { Text("Sismología", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(selectedIconColor = FlagBlue, unselectedIconColor = TextPrimary.copy(alpha=0.6f))
+                    icon = { Icon(Icons.Filled.MyLocation, contentDescription = "Mapa GPS") },
+                    label = { Text("Mapa GPS", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(selectedIconColor = Color.Green, unselectedIconColor = TextPrimary.copy(alpha=0.6f))
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Filled.Healing, contentDescription = "Hospitales") },
-                    label = { Text("Recursos", fontSize = 11.sp) },
+                    icon = { Icon(Icons.Filled.Sensors, contentDescription = "Detector") },
+                    label = { Text("Detector", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(selectedIconColor = FlagYellow, unselectedIconColor = TextPrimary.copy(alpha=0.6f))
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    icon = { Icon(Icons.Filled.Timeline, contentDescription = "Sismología") },
+                    label = { Text("Sismología", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(selectedIconColor = FlagBlue, unselectedIconColor = TextPrimary.copy(alpha=0.6f))
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 4,
+                    onClick = { selectedTab = 4 },
+                    icon = { Icon(Icons.Filled.Healing, contentDescription = "Recursos") },
+                    label = { Text("Recursos", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = FlagRed, unselectedIconColor = TextPrimary.copy(alpha=0.6f))
                 )
             }
         },
-        containerColor = MatrixDark
+        containerColor = Color.Transparent
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .background(MatrixDark)
         ) {
-            
-            // Tab Row for Clean Separation
-            TabRow(
+            // Subtle 3D background image
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.vzla_flag_3d_bg_1783071278886),
+                contentDescription = "Background",
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                alpha = 0.4f
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                
+                // Tab Row for Clean Separation
+            ScrollableTabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = GlassBackground,
                 contentColor = FlagYellow,
+                edgePadding = 0.dp,
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
                         Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
                         color = when(selectedTab) {
                             0 -> FlagYellow
-                            1 -> FlagBlue
+                            1 -> Color.Green
+                            2 -> FlagYellow
+                            3 -> FlagBlue
                             else -> FlagRed
                         }
                     )
                 }
             ) {
-                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Detector de Vida", fontSize = 11.sp, fontWeight = FontWeight.Bold) })
-                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Red FUNVISIS", fontSize = 11.sp, fontWeight = FontWeight.Bold) })
-                Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("Hospitales & Fe", fontSize = 11.sp, fontWeight = FontWeight.Bold) })
+                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Aquí Estoy", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
+                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Mapa GPS", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
+                Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("Detector", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
+                Tab(selected = selectedTab == 3, onClick = { selectedTab = 3 }, text = { Text("Sismología", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
+                Tab(selected = selectedTab == 4, onClick = { selectedTab = 4 }, text = { Text("Recursos", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             when (selectedTab) {
                 0 -> {
+                    StatsAndManualTab(
+                        dbReportsList = dbReportsList,
+                        dynamicReportedCount = dynamicReportedCount,
+                        dynamicSearchedCount = dynamicSearchedCount,
+                        dynamicLocatedCount = dynamicLocatedCount,
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = { searchQuery = it },
+                        showRegisterDialog = showRegisterDialog,
+                        onShowRegisterDialogChange = { showRegisterDialog = it },
+                        registerName = registerName,
+                        onRegisterNameChange = { registerName = it },
+                        registerLocationText = registerLocationText,
+                        onRegisterLocationTextChange = { registerLocationText = it },
+                        registerDescription = registerDescription,
+                        onRegisterDescriptionChange = { registerDescription = it },
+                        registerStatus = registerStatus,
+                        onRegisterStatusChange = { registerStatus = it },
+                        onSaveReport = {
+                            scope.launch {
+                                val newReport = ResqReportEntity(
+                                    type = "Persona_${registerStatus}",
+                                    description = "Nombre: $registerName. Sector: $registerLocationText. Detalle: $registerDescription",
+                                    latitude = userLat,
+                                    longitude = userLon,
+                                    isSynced = false
+                                )
+                                reportDao.insertReport(newReport)
+                                Toast.makeText(context, "¡Reporte guardado localmente! Sincronización en cola.", Toast.LENGTH_LONG).show()
+                                showRegisterDialog = false
+                                // Reset fields
+                                registerName = ""
+                                registerLocationText = ""
+                                registerDescription = ""
+                            }
+                        }
+                    )
+                }
+
+                1 -> {
+                    GpsMapTab(
+                        userLat = userLat,
+                        onUserLatChange = { userLat = it },
+                        userLon = userLon,
+                        onUserLonChange = { userLon = it },
+                        scanningProgress = scanningProgress,
+                        compassHeading = compassHeading,
+                        dbReportsList = dbReportsList,
+                        gpsAccuracy = gpsAccuracy,
+                        satelliteCount = satelliteCount,
+                        manualLatInput = manualLatInput,
+                        onManualLatInputChange = { manualLatInput = it },
+                        manualLonInput = manualLonInput,
+                        onManualLonInputChange = { manualLonInput = it },
+                        isManualInputEnabled = isManualInputEnabled,
+                        onIsManualInputEnabledChange = { isManualInputEnabled = it },
+                        locationPermissionsState = locationPermissionsState,
+                        onFetchCurrentLocation = {
+                            if (locationPermissionsState.allPermissionsGranted) {
+                                try {
+                                    fusedLocationClient.getCurrentLocation(
+                                        Priority.PRIORITY_HIGH_ACCURACY,
+                                        null
+                                    ).addOnSuccessListener { location ->
+                                        if (location != null) {
+                                            userLat = location.latitude
+                                            userLon = location.longitude
+                                            manualLatInput = String.format("%.5f", location.latitude)
+                                            manualLonInput = String.format("%.5f", location.longitude)
+                                            gpsAccuracy = "+/- ${String.format("%.1f", location.accuracy)} metros"
+                                        }
+                                    }
+                                } catch (e: SecurityException) {
+                                    // exception
+                                }
+                            } else {
+                                locationPermissionsState.launchMultiplePermissionRequest()
+                            }
+                        }
+                    )
+                }
+
+                2 -> {
                     // TAB 0: ACOUSTIC LIFE DETECTOR & WIFI WIRELESS SURVIVOR SCANNER
                     LazyColumn(
                         modifier = Modifier.weight(1f),
@@ -693,7 +961,7 @@ fun MainMapOfflineScreen(
                     }
                 }
 
-                1 -> {
+                3 -> {
                     // TAB 1: FUNVISIS & USGS live feeds + 3D Satellite Radar Sweep Simulation
                     LazyColumn(
                         modifier = Modifier.weight(1f),
@@ -755,6 +1023,131 @@ fun MainMapOfflineScreen(
                             }
                         }
 
+                        // SECTION: Geological Faults
+                        item {
+                            Text("SISTEMAS DE FALLAS GEOLÓGICAS ACTIVAS", color = FlagRed, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        items(geologicalFaultsList) { fault ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(GlassBackground)
+                                    .border(1.dp, FlagRed.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Column {
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(fault.name, color = FlagYellow, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        Text(fault.slipRate, color = Color.Green, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("Zona: ${fault.zone}", color = TextPrimary, fontSize = 11.sp)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text("Sismos Históricos: ${fault.historicalSismos}", color = TextPrimary.copy(alpha = 0.7f), fontSize = 10.sp)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(ErrorRed)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(fault.riskLevel, color = ErrorRed, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text("Extensión: ~${fault.lengthKm} km", color = TextPrimary.copy(alpha = 0.5f), fontSize = 9.sp)
+                                    }
+                                }
+                            }
+                        }
+
+                        // SECTION: FUNVISIS Seismological Stations Monitor
+                        item {
+                            Text("ESTACIONES RED SISMOLÓGICA NACIONAL (FUNVISIS)", color = FlagYellow, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        items(funvisisStationsList) { station ->
+                            // Custom tremor oscillation representation using waveTick to make it animatively dance!
+                            val tremorVal = remember(station.code) { (15..45).random() / 1000f }
+                            val dynamicTremor = tremorVal + (sin(waveTick.toDouble() * (station.code.hashCode() % 5 + 1)).absoluteValue * 0.008f).toFloat()
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(GlassBackground)
+                                    .border(1.dp, GlassBorder.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Column {
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(8.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color.Green)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("${station.code} - ${station.name}", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(Color.Green.copy(alpha = 0.15f))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text("OPERATIVA", color = Color.Green, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("Tipo: ${station.type} | Región: ${station.location}", color = TextPrimary.copy(alpha = 0.7f), fontSize = 10.sp)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Coord: ${station.lat}°N, ${station.lon}°W", color = TextPrimary.copy(alpha = 0.5f), fontSize = 9.sp)
+                                        
+                                        // Tremor sparkline bar
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Ruido: ${String.format("%.3f", dynamicTremor)} mm/s", color = FlagYellow, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            // Small canvas drawing tremor amplitude
+                                            Canvas(modifier = Modifier.width(36.dp).height(10.dp)) {
+                                                val w = size.width
+                                                val h = size.height
+                                                val pts = 6
+                                                val path = Path()
+                                                path.moveTo(0f, h / 2f)
+                                                for (i in 1..pts) {
+                                                    val px = (w / pts) * i
+                                                    val py = if (i % 2 == 0) h/2f - (dynamicTremor * 200f) else h/2f + (dynamicTremor * 200f)
+                                                    path.lineTo(px, py.coerceIn(0f, h))
+                                                }
+                                                drawPath(
+                                                    path = path,
+                                                    color = FlagYellow,
+                                                    style = Stroke(width = 1.5.dp.toPx())
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         item {
                             Text("BOLETÍN DE SISMOLOGÍA CENTRALIZADA (REAL-TIME)", color = FlagYellow, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
@@ -787,7 +1180,7 @@ fun MainMapOfflineScreen(
                     }
                 }
 
-                2 -> {
+                4 -> {
                     // TAB 2: Hospitals, Face scanning database lookup, Comfort Bible Verse
                     LazyColumn(
                         modifier = Modifier.weight(1f),
@@ -905,6 +1298,7 @@ fun MainMapOfflineScreen(
                 }
             }
         }
+    }
     }
 }
 
