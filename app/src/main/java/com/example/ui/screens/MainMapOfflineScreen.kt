@@ -410,32 +410,25 @@ fun MainMapOfflineScreen(
                     label = { Text("Recursos", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = FlagRed, unselectedIconColor = TextPrimary.copy(alpha=0.6f))
                 )
+                NavigationBarItem(
+                    selected = selectedTab == 5,
+                    onClick = { selectedTab = 5 },
+                    icon = { Icon(Icons.Filled.Terminal, contentDescription = "Terminal") },
+                    label = { Text("Terminal", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF00FF00), unselectedIconColor = TextPrimary.copy(alpha=0.6f))
+                )
             }
         },
-        containerColor = Color.Transparent
+        containerColor = MatrixDark
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MatrixDark)
+                .padding(padding)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Subtle 3D background image
-            androidx.compose.foundation.Image(
-                painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.vzla_flag_3d_bg_1783071278886),
-                contentDescription = "Background",
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-                alpha = 0.4f
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                
-                // Tab Row for Clean Separation
+            
+            // Tab Row for Clean Separation
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = GlassBackground,
@@ -449,7 +442,8 @@ fun MainMapOfflineScreen(
                             1 -> Color.Green
                             2 -> FlagYellow
                             3 -> FlagBlue
-                            else -> FlagRed
+                            4 -> FlagRed
+                            else -> Color(0xFF00FF00) // Terminal Green
                         }
                     )
                 }
@@ -459,6 +453,7 @@ fun MainMapOfflineScreen(
                 Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("Detector", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
                 Tab(selected = selectedTab == 3, onClick = { selectedTab = 3 }, text = { Text("Sismología", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
                 Tab(selected = selectedTab == 4, onClick = { selectedTab = 4 }, text = { Text("Recursos", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
+                Tab(selected = selectedTab == 5, onClick = { selectedTab = 5 }, text = { Text("Terminal", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -1296,9 +1291,12 @@ fun MainMapOfflineScreen(
                         }
                     }
                 }
+
+                5 -> {
+                    LogViewerTab()
+                }
             }
         }
-    }
     }
 }
 
