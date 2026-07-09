@@ -14,9 +14,15 @@ object LogManager {
     val logs: StateFlow<List<LogEntry>> = _logs.asStateFlow()
 
     fun log(level: String, message: String) {
-        val time = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date())
-        val newLog = LogEntry(time, level, message)
-        _logs.value = (listOf(newLog) + _logs.value).take(150)
+        try {
+            val time = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date())
+            val newLog = LogEntry(time, level, message)
+            _logs.value = (listOf(newLog) + _logs.value).take(150)
+        } catch (e: Exception) {
+            // Failsafe in case of date formatting errors
+            val fallbackLog = LogEntry("Unknown", "FATAL", "Log error: ${e.message}")
+            _logs.value = (listOf(fallbackLog) + _logs.value).take(150)
+        }
     }
 
     fun error(message: String, throwable: Throwable? = null) {
