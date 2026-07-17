@@ -417,6 +417,13 @@ fun MainMapOfflineScreen(
                     label = { Text("Terminal", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF00FF00), unselectedIconColor = TextPrimary.copy(alpha=0.6f))
                 )
+                NavigationBarItem(
+                    selected = selectedTab == 6,
+                    onClick = { selectedTab = 6 },
+                    icon = { Icon(Icons.Filled.Security, contentDescription = "AI Core") },
+                    label = { Text("AI Core", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF00FFFF), unselectedIconColor = TextPrimary.copy(alpha=0.6f))
+                )
             }
         },
         containerColor = MatrixDark
@@ -443,7 +450,8 @@ fun MainMapOfflineScreen(
                             2 -> FlagYellow
                             3 -> FlagBlue
                             4 -> FlagRed
-                            else -> Color(0xFF00FF00) // Terminal Green
+                            5 -> Color(0xFF00FF00) // Terminal Green
+                            else -> Color(0xFF00FFFF) // AI Cyan
                         }
                     )
                 }
@@ -454,6 +462,7 @@ fun MainMapOfflineScreen(
                 Tab(selected = selectedTab == 3, onClick = { selectedTab = 3 }, text = { Text("Sismología", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
                 Tab(selected = selectedTab == 4, onClick = { selectedTab = 4 }, text = { Text("Recursos", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
                 Tab(selected = selectedTab == 5, onClick = { selectedTab = 5 }, text = { Text("Terminal", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
+                Tab(selected = selectedTab == 6, onClick = { selectedTab = 6 }, text = { Text("AI Core", fontSize = 10.sp, fontWeight = FontWeight.Bold) })
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -1294,6 +1303,10 @@ fun MainMapOfflineScreen(
 
                 5 -> {
                     LogViewerTab()
+                }
+
+                6 -> {
+                    AICoreSecurityTab()
                 }
             }
         }
