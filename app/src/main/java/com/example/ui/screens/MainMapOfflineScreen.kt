@@ -125,12 +125,25 @@ fun MainMapOfflineScreen(
     val scope = rememberCoroutineScope()
     var selectedTab by remember { mutableStateOf(0) }
     
-    // Test parameters
-    var userLat by remember { mutableStateOf(10.49) }
-    var userLon by remember { mutableStateOf(-66.89) }
+    // Offline storage for GPS coordinates & overrides
+    val gpsSharedPrefs = remember { context.getSharedPreferences("SismoGpsStorage", android.content.Context.MODE_PRIVATE) }
+    
+    // Physical vibration telemetry from accelerometer
+    val physicalVibration by com.example.utils.SeismicSensorManager.vibrationForce.collectAsState()
+    
+    // Test parameters (Local persistent)
+    var userLat by remember { mutableStateOf(gpsSharedPrefs.getFloat("user_lat", 10.49f).toDouble()) }
+    var userLon by remember { mutableStateOf(gpsSharedPrefs.getFloat("user_lon", -66.89f).toDouble()) }
     var showScanAnimation by remember { mutableStateOf(false) }
     var scanningProgress by remember { mutableStateOf(0f) }
 
+    LaunchedEffect(userLat, userLon) {
+        gpsSharedPrefs.edit()
+            .putFloat("user_lat", userLat.toFloat())
+            .putFloat("user_lon", userLon.toFloat())
+            .apply()
+    }
+ 
     // Room Database integration
     val db = remember { Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "resq-net-db").build() }
     val reportDao = remember { db.resqReportDao() }
@@ -164,9 +177,13 @@ fun MainMapOfflineScreen(
     var gpsAccuracy by remember { mutableStateOf("Excelente (GPS)") }
     var satelliteCount by remember { mutableStateOf(12) }
     var compassHeading by remember { mutableStateOf(45f) }
-    var manualLatInput by remember { mutableStateOf("10.49") }
-    var manualLonInput by remember { mutableStateOf("-66.89") }
-    var isManualInputEnabled by remember { mutableStateOf(false) }
+    var manualLatInput by remember { mutableStateOf(String.format("%.5f", userLat)) }
+    var manualLonInput by remember { mutableStateOf(String.format("%.5f", userLon)) }
+    var isManualInputEnabled by remember { mutableStateOf(gpsSharedPrefs.getBoolean("manual_input_enabled", false)) }
+
+    LaunchedEffect(isManualInputEnabled) {
+        gpsSharedPrefs.edit().putBoolean("manual_input_enabled", isManualInputEnabled).apply()
+    }
 
     // Acoustic sound wave life detector state
     var micSensitivity by remember { mutableStateOf(65f) }
@@ -1077,9 +1094,11 @@ fun MainMapOfflineScreen(
                         }
 
                         items(funvisisStationsList) { station ->
-                            // Custom tremor oscillation representation using waveTick to make it animatively dance!
+                            // Custom tremor oscillation representation using waveTick + physical vibration from device accelerometer!
                             val tremorVal = remember(station.code) { (15..45).random() / 1000f }
-                            val dynamicTremor = tremorVal + (sin(waveTick.toDouble() * (station.code.hashCode() % 5 + 1)).absoluteValue * 0.008f).toFloat()
+                            val dynamicTremor = tremorVal + 
+                                    (sin(waveTick.toDouble() * (station.code.hashCode() % 5 + 1)).absoluteValue * 0.008f).toFloat() + 
+                                    (physicalVibration * 0.08f)
 
                             Box(
                                 modifier = Modifier

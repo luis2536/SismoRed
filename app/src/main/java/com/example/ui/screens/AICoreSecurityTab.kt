@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.utils.LogManager
+import com.example.utils.SeismicSensorManager
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
@@ -65,11 +66,22 @@ fun AICoreSecurityTab() {
     )
 
     // Advanced dynamic metrics
-    var threatLevel by remember { mutableStateOf(12) }
+    val physicalVibration by SeismicSensorManager.vibrationForce.collectAsState()
+
+    var threatLevelBase by remember { mutableStateOf(12) }
+    val threatLevel = remember(threatLevelBase, physicalVibration) {
+        (threatLevelBase + (physicalVibration * 15f).toInt()).coerceIn(1, 99)
+    }
+
     var processingPower by remember { mutableStateOf(88) }
     var activeStations by remember { mutableStateOf(4) }
     var spectralEfficiency by remember { mutableStateOf(99.4f) }
-    var aiStatus by remember { mutableStateOf("ÓPTIMO - COGNITIVO") }
+    
+    val aiStatus = remember(threatLevel) {
+        if (threatLevel > 45) "CRÍTICO - ANOMALÍA DETECTADA"
+        else if (threatLevel > 22) "ESTUDIO DE ANOMALÍAS"
+        else "ÓPTIMO - COGNITIVO"
+    }
     
     val telemetryList = remember { mutableStateListOf<TelemetryCalc>() }
 
@@ -84,12 +96,10 @@ fun AICoreSecurityTab() {
 
         while (true) {
             delay(4000)
-            threatLevel = (4..18).random()
+            threatLevelBase = (4..18).random()
             processingPower = (82..99).random()
             activeStations = (3..6).random()
             spectralEfficiency = 98.0f + (0..19).random() / 10f
-            
-            aiStatus = if (threatLevel > 15) "ESTUDIO DE ANOMALÍAS" else "ÓPTIMO - COGNITIVO"
             
             // Randomly update a telemetry row safely
             if (telemetryList.isNotEmpty()) {
@@ -174,15 +184,15 @@ fun AICoreSecurityTab() {
                 val center = Offset(size.width / 2, size.height / 2)
                 val baseRadius = 65f * density
 
-                // Dynamic background cyber-wave (sinusoidal orbital rings)
+                // Dynamic background cyber-wave (sinusoidal orbital rings + accelerometer feedback)
                 for (angle in 0..360 step 15) {
                     val angleRad = Math.toRadians(angle.toDouble())
-                    val waveOffset = sin(angleRad * 3 + Math.toRadians(rotationZ.toDouble())) * 12f
+                    val waveOffset = sin(angleRad * 3 + Math.toRadians(rotationZ.toDouble())) * 12f + (physicalVibration * 18f)
                     val x = center.x + cos(angleRad).toFloat() * (baseRadius * 1.5f + waveOffset.toFloat())
                     val y = center.y + sin(angleRad).toFloat() * (baseRadius * 1.5f + waveOffset.toFloat())
                     drawCircle(
-                        color = Color(0xFF00FF00).copy(alpha = 0.15f),
-                        radius = 3f,
+                        color = if (physicalVibration > 1.2f) Color.Red.copy(alpha = 0.4f) else Color(0xFF00FF00).copy(alpha = 0.15f),
+                        radius = if (physicalVibration > 1.2f) 4.5f else 3f,
                         center = Offset(x, y)
                     )
                 }
@@ -267,7 +277,7 @@ fun AICoreSecurityTab() {
                     )
                     Text(
                         text = aiStatus,
-                        color = if (aiStatus.startsWith("ÓPTIMO")) Color(0xFF00FF00) else Color(0xFFFF9800),
+                        color = if (aiStatus.startsWith("ÓPTIMO")) Color(0xFF00FF00) else if (aiStatus.startsWith("CRÍTICO")) Color.Red else Color(0xFFFF9800),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace

@@ -66,12 +66,60 @@ data class SubestacionFicha(
     val validatedByCivilEngineer: Boolean = true
 )
 
+// --- ROBUST LOCAL-FIRST SERIALIZATION HELPERS ---
+
+fun serializeVecinalReport(report: VecinalReport): String {
+    return "${report.id}⦂${report.name}⦂${report.age}⦂${report.gender}⦂${report.dermalPattern}⦂${report.eyeColor}⦂${report.sector}⦂${report.brigadeName}⦂${report.registrationDate}⦂${report.isMatched}"
+}
+
+fun deserializeVecinalReport(str: String): VecinalReport? {
+    val parts = str.split("⦂")
+    if (parts.size < 10) return null
+    return VecinalReport(
+        id = parts[0],
+        name = parts[1],
+        age = parts[2].toIntOrNull() ?: 30,
+        gender = parts[3],
+        dermalPattern = parts[4],
+        eyeColor = parts[5],
+        sector = parts[6],
+        brigadeName = parts[7],
+        registrationDate = parts[8],
+        isMatched = parts[9].toBoolean()
+    )
+}
+
+fun serializeSubestacionFicha(ficha: SubestacionFicha): String {
+    return "${ficha.id}⦂${ficha.tempName}⦂${ficha.estimatedAge}⦂${ficha.estimatedGender}⦂${ficha.dermalPattern}⦂${ficha.eyeColor}⦂${ficha.currentSector}⦂${ficha.status}⦂${ficha.supportMission}⦂${ficha.validatedByCivilEngineer}"
+}
+
+fun deserializeSubestacionFicha(str: String): SubestacionFicha? {
+    val parts = str.split("⦂")
+    if (parts.size < 10) return null
+    return SubestacionFicha(
+        id = parts[0],
+        tempName = parts[1],
+        estimatedAge = parts[2].toIntOrNull() ?: 30,
+        estimatedGender = parts[3],
+        dermalPattern = parts[4],
+        eyeColor = parts[5],
+        currentSector = parts[6],
+        status = parts[7],
+        supportMission = parts[8],
+        validatedByCivilEngineer = parts[9].toBoolean()
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FaceScanScreen(
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    
+    // Local-First persistent storage settings
+    val sharedPrefs = remember { context.getSharedPreferences("SismoBiometricStorage", android.content.Context.MODE_PRIVATE) }
     
     // --- APP STATES ---
     var selectedTabIndex by remember { mutableStateOf(0) }
@@ -114,21 +162,43 @@ fun FaceScanScreen(
 
     // --- SEED LOCAL DATABASES ---
     val initialVecinalReports = remember {
-        mutableStateListOf(
-            VecinalReport("RV-102", "Carlos Mendoza", 34, "Masculino", "Verticilo", "Marrón", "Sector Macuto, El Litoral", "Brigada Vecinal 4", "28/06/2026"),
-            VecinalReport("RV-103", "Gabriela Delgado", 27, "Femenino", "Presilla", "Marrón", "Av. Soublette, Maiquetía", "Brigada de Base Popular", "29/06/2026"),
-            VecinalReport("RV-104", "Jesús Alfonzo", 52, "Masculino", "Arco", "Azul", "Naiguatá Costa", "Fuerza Vecinal Organizada", "30/06/2026"),
-            VecinalReport("RV-105", "Patricia Soler", 41, "Femenino", "Verticilo", "Verde", "Sector Caraballeda", "Brigada de Rescate 1", "01/07/2026")
-        )
+        val list = mutableStateListOf<VecinalReport>()
+        val saved = sharedPrefs.getStringSet("vecinal_reports", null)
+        if (saved != null) {
+            saved.forEach { str ->
+                deserializeVecinalReport(str)?.let { list.add(it) }
+            }
+        } else {
+            val defaults = listOf(
+                VecinalReport("RV-102", "Carlos Mendoza", 34, "Masculino", "Verticilo", "Marrón", "Sector Macuto, El Litoral", "Brigada Vecinal 4", "28/06/2026"),
+                VecinalReport("RV-103", "Gabriela Delgado", 27, "Femenino", "Presilla", "Marrón", "Av. Soublette, Maiquetía", "Brigada de Base Popular", "29/06/2026"),
+                VecinalReport("RV-104", "Jesús Alfonzo", 52, "Masculino", "Arco", "Azul", "Naiguatá Costa", "Fuerza Vecinal Organizada", "30/06/2026"),
+                VecinalReport("RV-105", "Patricia Soler", 41, "Femenino", "Verticilo", "Verde", "Sector Caraballeda", "Brigada de Rescate 1", "01/07/2026")
+            )
+            list.addAll(defaults)
+            sharedPrefs.edit().putStringSet("vecinal_reports", defaults.map { serializeVecinalReport(it) }.toSet()).apply()
+        }
+        list
     }
 
     val initialSubestacionFichas = remember {
-        mutableStateListOf(
-            SubestacionFicha("SS-205", "N.N. Masculino (Sector Macuto)", 35, "Masculino", "Verticilo", "Marrón", "Hospital Móvil Macuto", "Triage Crítico", "Misión España"),
-            SubestacionFicha("SS-206", "N.N. Femenino (Maiquetía)", 26, "Femenino", "Presilla", "Marrón", "Subestación Naiguatá", "Estable", "Misión India"),
-            SubestacionFicha("SS-207", "N.N. Masculino (La Guaira)", 51, "Masculino", "Verticilo", "Negro", "Clínica de Campaña Central", "Estable", "Misión Ecuador"),
-            SubestacionFicha("SS-208", "N.N. Femenino (Caraballeda)", 42, "Femenino", "Verticilo", "Verde", "Subestación Sanitaria Periférica", "Estable", "Misión Portugal")
-        )
+        val list = mutableStateListOf<SubestacionFicha>()
+        val saved = sharedPrefs.getStringSet("subestacion_fichas", null)
+        if (saved != null) {
+            saved.forEach { str ->
+                deserializeSubestacionFicha(str)?.let { list.add(it) }
+            }
+        } else {
+            val defaults = listOf(
+                SubestacionFicha("SS-205", "N.N. Masculino (Sector Macuto)", 35, "Masculino", "Verticilo", "Marrón", "Hospital Móvil Macuto", "Triage Crítico", "Misión España"),
+                SubestacionFicha("SS-206", "N.N. Femenino (Maiquetía)", 26, "Femenino", "Presilla", "Marrón", "Subestación Naiguatá", "Estable", "Misión India"),
+                SubestacionFicha("SS-207", "N.N. Masculino (La Guaira)", 51, "Masculino", "Verticilo", "Negro", "Clínica de Campaña Central", "Estable", "Misión Ecuador"),
+                SubestacionFicha("SS-208", "N.N. Femenino (Caraballeda)", 42, "Femenino", "Verticilo", "Verde", "Subestación Sanitaria Periférica", "Estable", "Misión Portugal")
+            )
+            list.addAll(defaults)
+            sharedPrefs.edit().putStringSet("subestacion_fichas", defaults.map { serializeSubestacionFicha(it) }.toSet()).apply()
+        }
+        list
     }
 
     // Interactive custom state for adding new reports
@@ -651,19 +721,19 @@ fun FaceScanScreen(
                                 Button(
                                     onClick = {
                                         // Push result to mobile substations
-                                        initialSubestacionFichas.add(
-                                            SubestacionFicha(
-                                                id = "SS-${(210..999).random()}",
-                                                tempName = "Identificación Validada: $detectedCivilianName",
-                                                estimatedAge = selectedAgeGroup,
-                                                estimatedGender = selectedGender,
-                                                dermalPattern = selectedDermalPattern,
-                                                eyeColor = selectedEyeColor,
-                                                currentSector = "Subestación Provisional Litoral",
-                                                status = "Estable",
-                                                supportMission = "Fuerzas de Seguridad Unificadas"
-                                            )
+                                        val newFicha = SubestacionFicha(
+                                            id = "SS-${(210..999).random()}",
+                                            tempName = "Identificación Validada: $detectedCivilianName",
+                                            estimatedAge = selectedAgeGroup,
+                                            estimatedGender = selectedGender,
+                                            dermalPattern = selectedDermalPattern,
+                                            eyeColor = selectedEyeColor,
+                                            currentSector = "Subestación Provisional Litoral",
+                                            status = "Estable",
+                                            supportMission = "Fuerzas de Seguridad Unificadas"
                                         )
+                                        initialSubestacionFichas.add(newFicha)
+                                        sharedPrefs.edit().putStringSet("subestacion_fichas", initialSubestacionFichas.map { serializeSubestacionFicha(it) }.toSet()).apply()
                                         scanCompleteResult = null
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
@@ -1193,19 +1263,20 @@ fun FaceScanScreen(
                 Button(
                     onClick = {
                         val ageInt = newVecinalAge.toIntOrNull() ?: 30
-                        initialVecinalReports.add(
-                            VecinalReport(
-                                id = "RV-${(106..999).random()}",
-                                name = newVecinalName.ifEmpty { "Vecino Desconocido" },
-                                age = ageInt,
-                                gender = selectedGender,
-                                dermalPattern = selectedDermalPattern,
-                                eyeColor = selectedEyeColor,
-                                sector = newVecinalSector.ifEmpty { "Litoral Central" },
-                                brigadeName = "Brigada Vecinal Unida",
-                                registrationDate = "Hoy"
-                            )
+                        val newReport = VecinalReport(
+                            id = "RV-${(106..999).random()}",
+                            name = newVecinalName.ifEmpty { "Vecino Desconocido" },
+                            age = ageInt,
+                            gender = selectedGender,
+                            dermalPattern = selectedDermalPattern,
+                            eyeColor = selectedEyeColor,
+                            sector = newVecinalSector.ifEmpty { "Litoral Central" },
+                            brigadeName = "Brigada Vecinal Unida",
+                            registrationDate = "Hoy"
                         )
+                        initialVecinalReports.add(newReport)
+                        sharedPrefs.edit().putStringSet("vecinal_reports", initialVecinalReports.map { serializeVecinalReport(it) }.toSet()).apply()
+                        
                         showAddVecinalDialog = false
                         newVecinalName = ""
                         newVecinalAge = ""
@@ -1255,19 +1326,20 @@ fun FaceScanScreen(
                 Button(
                     onClick = {
                         val ageInt = newFichaEstAge.toIntOrNull() ?: 30
-                        initialSubestacionFichas.add(
-                            SubestacionFicha(
-                                id = "SS-${(210..999).random()}",
-                                tempName = newFichaTempName.ifEmpty { "N.N. Masculino" },
-                                estimatedAge = ageInt,
-                                estimatedGender = selectedGender,
-                                dermalPattern = selectedDermalPattern,
-                                eyeColor = selectedEyeColor,
-                                currentSector = newFichaSector.ifEmpty { "Macuto Subestación" },
-                                status = newFichaStatus,
-                                supportMission = newFichaMission
-                            )
+                        val newFicha = SubestacionFicha(
+                            id = "SS-${(210..999).random()}",
+                            tempName = newFichaTempName.ifEmpty { "N.N. Masculino" },
+                            estimatedAge = ageInt,
+                            estimatedGender = selectedGender,
+                            dermalPattern = selectedDermalPattern,
+                            eyeColor = selectedEyeColor,
+                            currentSector = newFichaSector.ifEmpty { "Macuto Subestación" },
+                            status = newFichaStatus,
+                            supportMission = newFichaMission
                         )
+                        initialSubestacionFichas.add(newFicha)
+                        sharedPrefs.edit().putStringSet("subestacion_fichas", initialSubestacionFichas.map { serializeSubestacionFicha(it) }.toSet()).apply()
+                        
                         showAddFichaDialog = false
                         newFichaTempName = ""
                         newFichaEstAge = ""

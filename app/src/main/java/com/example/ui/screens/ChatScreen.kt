@@ -14,24 +14,57 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.Room
+import com.example.data.local.AppDatabase
 import com.example.data.local.entity.ChatMessageEntity
 import com.example.ui.theme.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var messageText by remember { mutableStateOf("") }
+
+    // Initialize Room DB
+    val db = remember { Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "resq-net-db").build() }
+    val chatDao = remember { db.chatDao() }
     
-    // Fake messages for simulation
-    val messages = remember { mutableStateListOf(
-        ChatMessageEntity(1, "system", "Núcleo Central", "Conexión encriptada estable. Malla VPN activa.", System.currentTimeMillis() - 60000, true),
-        ChatMessageEntity(2, "user_1", "Rescatista Alpha", "¿Alguien en el sector 4? Necesitamos soporte.", System.currentTimeMillis() - 30000, true)
-    ) }
+    // Collect persisted messages
+    val messagesState by chatDao.getAllMessages().collectAsState(initial = emptyList())
+
+    // If database is empty, prepopulate with critical tactical systems logs
+    LaunchedEffect(messagesState) {
+        if (messagesState.isEmpty()) {
+            coroutineScope.launch {
+                chatDao.insertMessage(
+                    ChatMessageEntity(
+                        senderId = "system",
+                        senderName = "Núcleo Central",
+                        message = "Conexión encriptada estable. Malla VPN activa.",
+                        timestamp = System.currentTimeMillis() - 60000,
+                        isSynced = true
+                    )
+                )
+                chatDao.insertMessage(
+                    ChatMessageEntity(
+                        senderId = "user_1",
+                        senderName = "Rescatista Alpha",
+                        message = "¿Alguien en el sector 4? Necesitamos soporte sismológico.",
+                        timestamp = System.currentTimeMillis() - 30000,
+                        isSynced = true
+                    )
+                )
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -58,7 +91,7 @@ fun ChatScreen(
                     .padding(horizontal = 16.dp),
                 reverseLayout = false
             ) {
-                items(messages) { msg ->
+                items(messagesState) { msg ->
                     ChatBubble(msg)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -87,17 +120,19 @@ fun ChatScreen(
                 IconButton(
                     onClick = {
                         if (messageText.isNotBlank()) {
-                            messages.add(
-                                ChatMessageEntity(
-                                    id = messages.size + 1,
-                                    senderId = "me",
-                                    senderName = "Yo",
-                                    message = messageText,
-                                    timestamp = System.currentTimeMillis(),
-                                    isSynced = false
-                                )
-                            )
+                            val userMsg = messageText
                             messageText = ""
+                            coroutineScope.launch {
+                                chatDao.insertMessage(
+                                    ChatMessageEntity(
+                                        senderId = "me",
+                                        senderName = "Yo",
+                                        message = userMsg,
+                                        timestamp = System.currentTimeMillis(),
+                                        isSynced = false
+                                    )
+                                )
+                            }
                         }
                     },
                     modifier = Modifier
