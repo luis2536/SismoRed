@@ -1,3 +1,18 @@
 <resources>
+    <!-- Core App Strings (es-LA Default) -->
     <string name="app_name">SismoRedVen</string>
+    <string name="login_title">SISMORED VEN</string>
+    <string name="login_subtitle">NÚCLEO CENTRAL</string>
+    <string name="login_btn_register">REGISTRAR Y ACCEDER</string>
+    <string name="login_btn_signin">INICIAR SESIÓN</string>
+    <string name="login_biometric_btn">Vincular Datos Biométricos</string>
+    <string name="auth_biometric_title">Autenticación Zero-Trust</string>
+    <string name="auth_biometric_subtitle">Requerido por Syntropy Delta Labs</string>
+    
+    <!-- Dynamic Language Selector Settings -->
+    <string-array name="supported_languages">
+        <item>Español (Latinoamérica)</item>
+        <item>English</item>
+        <item>Português</item>
+    </string-array>
 </resources>

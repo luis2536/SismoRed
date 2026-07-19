@@ -21,16 +21,58 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
 
+import androidx.compose.ui.platform.LocalContext
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import android.widget.Toast
+
+import androidx.compose.ui.res.stringResource
+import com.example.R
+
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
     var isRegistering by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var cedula by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("Rescatista") }
+    var isAuthenticating by remember { mutableStateOf(false) }
+
+    fun authenticateWithBiometrics() {
+        val fragmentActivity = context as? FragmentActivity ?: return
+        val executor = ContextCompat.getMainExecutor(context)
+        val biometricPrompt = BiometricPrompt(fragmentActivity, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    Toast.makeText(context, "Error Biométrico: $errString", Toast.LENGTH_SHORT).show()
+                }
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    Toast.makeText(context, "Autenticación Biométrica Exitosa", Toast.LENGTH_SHORT).show()
+                    onLoginSuccess()
+                }
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    Toast.makeText(context, "Autenticación Fallida", Toast.LENGTH_SHORT).show()
+                }
+            })
+
+        val title = context.getString(R.string.auth_biometric_title)
+        val subtitle = context.getString(R.string.auth_biometric_subtitle)
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(title)
+            .setSubtitle(subtitle)
+            .setNegativeButtonText("Usar Contraseña")
+            .build()
+        
+        biometricPrompt.authenticate(promptInfo)
+    }
 
     Box(
         modifier = Modifier
@@ -49,8 +91,8 @@ fun LoginScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("SISMORED VEN", color = FlagYellow, fontWeight = FontWeight.Black, fontSize = 28.sp, letterSpacing = 2.sp)
-            Text("NÚCLEO CENTRAL", color = FlagBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(stringResource(R.string.login_title), color = FlagYellow, fontWeight = FontWeight.Black, fontSize = 28.sp, letterSpacing = 2.sp)
+            Text(stringResource(R.string.login_subtitle), color = FlagBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -146,24 +188,24 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = { /* Lógica biométrica */ },
+                    onClick = { authenticateWithBiometrics() },
                     colors = ButtonDefaults.buttonColors(containerColor = GlassBorder, contentColor = TextPrimary),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Filled.Fingerprint, contentDescription = "Biometría")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Vincular Datos Biométricos")
+                    Text(stringResource(R.string.login_biometric_btn))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
             Button(
-                onClick = onLoginSuccess,
+                onClick = { authenticateWithBiometrics() },
                 colors = ButtonDefaults.buttonColors(containerColor = FlagYellow, contentColor = MatrixDark),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(if (isRegistering) "REGISTRAR Y ACCEDER" else "INICIAR SESIÓN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text(if (isRegistering) stringResource(R.string.login_btn_register) else stringResource(R.string.login_btn_signin), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
             
             Spacer(modifier = Modifier.height(16.dp))
