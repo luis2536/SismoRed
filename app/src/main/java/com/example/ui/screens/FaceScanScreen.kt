@@ -19,6 +19,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import kotlin.math.cos
+import kotlin.math.sin
+
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -596,15 +600,16 @@ fun FaceScanScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             if (biometricScanning) {
+                                val sweepLineY = scanSweepVal * 240f
                                 if (scanModality == "FACIAL") {
                                     RealCameraFaceScanner(
                                         onFacesDetected = { faces ->
                                             if (faces.isNotEmpty()) {
                                                 biometricScanning = false
                                                 val match = initialVecinalReports.random()
-                                                scanCompleteResult = true
+                                                scanCompleteResult = "true"
                                                 detectedCivilianName = match.name
-                                                scanMatchDetails = "ID: ${match.id} | Brigade: ${match.brigadeName} | Status: Identificado con Reconocimiento Facial (ML Kit)"
+                                                detectedCivilianName =  "ID: ${match.id} | Brigade: ${match.brigadeName} | Status: Identificado con Reconocimiento Facial (ML Kit)"
                                             }
                                         }
                                     )
@@ -629,14 +634,15 @@ fun FaceScanScreen(
                                         val pointY = cos((i * 45).toDouble()) * (40..80).random()
                                         Box(
                                             modifier = Modifier
-                                                .offset(x = pointX.dp, y = pointY.dp)
+                                                .offset(x = pointX.toFloat().dp, y = pointY.toFloat().dp)
                                                 .size(6.dp)
                                                 .clip(CircleShape)
                                                 .background(FlagYellow.copy(alpha = 0.9f))
                                         )
                                     }
                                 }
-                            } else if (scanCompleteResult == true) {
+                            } else if (scanCompleteResult != null) {
+                                val sweepLineY = scanSweepVal * 240f
                                 Canvas(modifier = Modifier.fillMaxSize()) {
                                     // Sweep light gradient bar
                                     drawRect(

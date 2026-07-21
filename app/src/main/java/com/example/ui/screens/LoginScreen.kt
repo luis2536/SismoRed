@@ -29,6 +29,8 @@ import android.widget.Toast
 
 import androidx.compose.ui.res.stringResource
 import com.example.R
+import com.google.firebase.auth.FirebaseAuth
+import android.util.Log
 
 @Composable
 fun LoginScreen(
@@ -42,6 +44,44 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("Rescatista") }
     var isAuthenticating by remember { mutableStateOf(false) }
+    var authError by remember { mutableStateOf<String?>(null) }
+    val auth = remember { FirebaseAuth.getInstance() }
+
+    fun handleFirebaseAuth() {
+        if (cedula.isEmpty() || password.isEmpty()) {
+            Toast.makeText(context, "Ingrese cédula y contraseña", Toast.LENGTH_SHORT).show()
+            return
+        }
+        isAuthenticating = true
+        authError = null
+        val email = "${cedula.trim()}@sismoredven.com"
+        
+        if (isRegistering) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    isAuthenticating = false
+                    if (task.isSuccessful) {
+                        Toast.makeText(context, "Registro Exitoso", Toast.LENGTH_SHORT).show()
+                        onLoginSuccess()
+                    } else {
+                        authError = task.exception?.message
+                        Toast.makeText(context, "Error: ${authError}", Toast.LENGTH_LONG).show()
+                    }
+                }
+        } else {
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    isAuthenticating = false
+                    if (task.isSuccessful) {
+                        Toast.makeText(context, "Ingreso Exitoso", Toast.LENGTH_SHORT).show()
+                        onLoginSuccess()
+                    } else {
+                        authError = task.exception?.message
+                        Toast.makeText(context, "Error: ${authError}", Toast.LENGTH_LONG).show()
+                    }
+                }
+        }
+    }
 
     fun authenticateWithBiometrics() {
         val fragmentActivity = context as? FragmentActivity ?: return
@@ -200,12 +240,17 @@ fun LoginScreen(
             }
 
             Button(
-                onClick = { authenticateWithBiometrics() },
+                onClick = { handleFirebaseAuth() },
                 colors = ButtonDefaults.buttonColors(containerColor = FlagYellow, contentColor = MatrixDark),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                enabled = !isAuthenticating
             ) {
-                Text(if (isRegistering) stringResource(R.string.login_btn_register) else stringResource(R.string.login_btn_signin), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                if (isAuthenticating) {
+                    CircularProgressIndicator(color = MatrixDark, modifier = Modifier.size(24.dp))
+                } else {
+                    Text(if (isRegistering) stringResource(R.string.login_btn_register) else stringResource(R.string.login_btn_signin), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
