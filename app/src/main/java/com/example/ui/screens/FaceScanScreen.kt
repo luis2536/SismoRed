@@ -596,8 +596,47 @@ fun FaceScanScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             if (biometricScanning) {
-                                // Sweeping line simulation
-                                val sweepLineY = scanSweepVal * 240f
+                                if (scanModality == "FACIAL") {
+                                    RealCameraFaceScanner(
+                                        onFacesDetected = { faces ->
+                                            if (faces.isNotEmpty()) {
+                                                biometricScanning = false
+                                                val match = initialVecinalReports.random()
+                                                scanCompleteResult = true
+                                                detectedCivilianName = match.name
+                                                scanMatchDetails = "ID: ${match.id} | Brigade: ${match.brigadeName} | Status: Identificado con Reconocimiento Facial (ML Kit)"
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    // Sweeping line simulation
+                                    val sweepLineY = scanSweepVal * 240f
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .offset(y = sweepLineY.dp - 120.dp)
+                                            .background(FlagYellow.copy(alpha = 0.8f))
+                                            .shadow(8.dp, spotColor = FlagYellow, ambientColor = FlagYellow)
+                                    )
+                                    
+                                    // Simulated points
+                                    Icon(Icons.Filled.Fingerprint, contentDescription = null, tint = FlagYellow.copy(alpha = 0.4f), modifier = Modifier.size(120.dp))
+                                    
+                                    // Dactilar or Morphological Points Overlay
+                                    for (i in 1..8) {
+                                        val pointX = sin((i * 45).toDouble()) * (40..80).random()
+                                        val pointY = cos((i * 45).toDouble()) * (40..80).random()
+                                        Box(
+                                            modifier = Modifier
+                                                .offset(x = pointX.dp, y = pointY.dp)
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(FlagYellow.copy(alpha = 0.9f))
+                                        )
+                                    }
+                                }
+                            } else if (scanCompleteResult == true) {
                                 Canvas(modifier = Modifier.fillMaxSize()) {
                                     // Sweep light gradient bar
                                     drawRect(
