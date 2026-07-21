@@ -118,6 +118,7 @@ dependencies {
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.maps.compose)
   implementation(libs.play.services.maps)
+  implementation(libs.firebase.auth)
   implementation(libs.firebase.ai)
   implementation(libs.generativeai)
   implementation(libs.firebase.appcheck.recaptcha)
